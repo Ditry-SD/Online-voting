@@ -44,7 +44,10 @@ pip install -r requirements.txt
 # 4. Запустить приложение
 uvicorn backend.main:app --reload
 
-После запуска открыть в браузере: http://localhost:8000
+После запуска открыть в браузере: 
+http://localhost:8000 — главная страница  
+http://localhost:8000/results  — результаты  
+http://localhost:8000/docs — Swagger (описание API)
 
 # Запуск через Docker
 
@@ -53,7 +56,9 @@ git clone https://github.com/Ditry-SD/online-voting.git
 cd online-voting
 
 # 2. Собрать и запустить контейнер
-docker-compose up --build
+docker-compose build  
+docker-compose up  
+docker-compose dowm (отключение)
 
 После запуска открыть в браузере: http://localhost
 
