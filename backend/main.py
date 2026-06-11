@@ -30,10 +30,6 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 def get_db():
-    """
-    Функция-генератор для получения сессии базы данных.
-    Автоматически закрывает соединение после использования.
-    """
     db = SessionLocal()
     try:
         yield db
@@ -42,23 +38,13 @@ def get_db():
 
 @app.get("/api/candidates")
 def get_candidates(db: Session = Depends(get_db)):
-    """
-    API endpoint: получение списка всех кандидатов.
-    Возвращает JSON со всеми кандидатами и количеством голосов.
-    """
     candidates = db.query(models.Candidate).all()
     return candidates
 
 @app.post("/api/vote/{candidate_id}")
 def vote(candidate_id: int, request: Request, db: Session = Depends(get_db)):
-    """
-    API endpoint: голосование за кандидата.
-    Проверяет, не голосовал ли уже этот IP-адрес.
-    """
-    # Получаем IP-адрес голосующего
     user_ip = request.client.host
     
-    # Проверяем, не голосовал ли уже этот IP
     existing_vote = db.query(models.Vote).filter(
         models.Vote.user_ip == user_ip
     ).first()
@@ -69,7 +55,6 @@ def vote(candidate_id: int, request: Request, db: Session = Depends(get_db)):
             detail="Вы уже голосовали! С одного IP можно голосовать только один раз."
         )
     
-    # Ищем кандидата по ID
     candidate = db.query(models.Candidate).filter(
         models.Candidate.id == candidate_id
     ).first()
@@ -77,17 +62,14 @@ def vote(candidate_id: int, request: Request, db: Session = Depends(get_db)):
     if not candidate:
         raise HTTPException(status_code=404, detail="Кандидат не найден")
     
-    # Увеличиваем счетчик голосов кандидата
     candidate.votes += 1
     
-    # Сохраняем информацию о голосе
     vote_record = models.Vote(
         user_ip=user_ip,
         candidate_id=candidate_id
     )
     db.add(vote_record)
     
-    # Сохраняем все изменения в базе данных
     db.commit()
     
     return {
@@ -98,27 +80,35 @@ def vote(candidate_id: int, request: Request, db: Session = Depends(get_db)):
 
 @app.get("/")
 def home(request: Request, db: Session = Depends(get_db)):
-    """
-    Главная страница приложения.
-    Отображает HTML-шаблон со списком кандидатов.
-    """
     candidates = db.query(models.Candidate).all()
     return templates.TemplateResponse(
-        request=request,
-        name="index.html",
-        context={"candidates": candidates}
+        "index.html",
+        {"request": request, "candidates": candidates}
     )
 
-# Автоматическое добавление тестовых данных при первом запуске
+@app.get("/results")
+def results(request: Request, db: Session = Depends(get_db)):
+    candidates = db.query(models.Candidate).order_by(
+        models.Candidate.votes.desc()
+    ).all()
+    
+    total_votes = sum(c.votes for c in candidates)
+    max_votes = max(c.votes for c in candidates) if candidates else 0
+    
+    return templates.TemplateResponse(
+        "results.html",
+        {
+            "request": request,
+            "candidates": candidates,
+            "total_votes": total_votes,
+            "max_votes": max_votes
+        }
+    )
+
 @app.on_event("startup")
 def startup_event():
-    """
-    Выполняется при запуске приложения.
-    Добавляет тестовых кандидатов, если база данных пуста.
-    """
     db = SessionLocal()
     try:
-        # Проверяем, есть ли уже кандидаты в базе
         candidates_count = db.query(models.Candidate).count()
         
         if candidates_count == 0:
@@ -127,28 +117,23 @@ def startup_event():
             test_candidates = [
                 models.Candidate(
                     name="Иван Петров",
-                    description="Опытный руководитель с 10-летним стажем. "
-                                "Выступает за цифровизацию и внедрение инноваций."
+                    description="Опытный руководитель с 10-летним стажем."
                 ),
                 models.Candidate(
                     name="Мария Сидорова",
-                    description="Молодой специалист с инновационными идеями. "
-                                "Фокус на экологических проектах и образовании."
+                    description="Молодой специалист с инновационными идеями."
                 ),
                 models.Candidate(
                     name="Алексей Иванов",
-                    description="Технический эксперт в области IT. "
-                                "Предлагает программу развития кибербезопасности."
+                    description="Технический эксперт в области IT."
                 ),
                 models.Candidate(
                     name="Елена Кузнецова",
-                    description="Социальный работник с 15-летним опытом. "
-                                "Приоритет - социальная защита населения."
+                    description="Социальный работник с 15-летним опытом."
                 ),
                 models.Candidate(
                     name="Дмитрий Соколов",
-                    description="Предприниматель, создавший 500 рабочих мест. "
-                                "Программа поддержки малого и среднего бизнеса."
+                    description="Предприниматель, создавший 500 рабочих мест."
                 ),
             ]
             
