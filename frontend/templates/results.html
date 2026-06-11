@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -19,6 +19,9 @@
     <!-- Основной контент -->
     <div class="container mt-5">
         <h1 class="text-center mb-4">Текущие результаты</h1>
+    <div class="text-center mb-4">
+        <button onclick="resetVotes()" class="btn btn-warning btn-sm">🔄 Сбросить все голоса</button>
+    </div>
         
         {% if total_votes > 0 %}
         <div class="text-center mb-4">
@@ -71,5 +74,13 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+async function resetVotes() {
+    if (confirm('Точно сбросить все голоса?')) {
+        await fetch('/api/reset-votes', { method: 'POST' });
+        location.reload();
+    }
+}
+</script>
 </body>
 </html>

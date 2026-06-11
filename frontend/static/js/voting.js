@@ -1,4 +1,4 @@
-// Ждем полной загрузки страницы
+﻿// Ждем полной загрузки страницы
 document.addEventListener('DOMContentLoaded', async () => {
     await loadCandidates();
 });

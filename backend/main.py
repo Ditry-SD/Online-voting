@@ -1,4 +1,4 @@
-import os
+﻿import os
 import sys
 
 # Добавляем корневую папку проекта в пути Python
@@ -43,35 +43,40 @@ def get_candidates(db: Session = Depends(get_db)):
 
 @app.post("/api/vote/{candidate_id}")
 def vote(candidate_id: int, request: Request, db: Session = Depends(get_db)):
-    user_ip = request.client.host
-    
+    # Правильно определяем IP (важно для работы за прокси/Docker)
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        user_ip = forwarded_for.split(",")[0].strip()
+    else:
+        user_ip = request.client.host
+
     existing_vote = db.query(models.Vote).filter(
         models.Vote.user_ip == user_ip
     ).first()
-    
+
     if existing_vote:
         raise HTTPException(
-            status_code=400, 
+            status_code=400,
             detail="Вы уже голосовали! С одного IP можно голосовать только один раз."
         )
-    
+
     candidate = db.query(models.Candidate).filter(
         models.Candidate.id == candidate_id
     ).first()
-    
+
     if not candidate:
         raise HTTPException(status_code=404, detail="Кандидат не найден")
-    
+
     candidate.votes += 1
-    
+
     vote_record = models.Vote(
         user_ip=user_ip,
         candidate_id=candidate_id
     )
     db.add(vote_record)
-    
+
     db.commit()
-    
+
     return {
         "message": "Голос успешно учтен!",
         "candidate": candidate.name,
@@ -150,3 +155,11 @@ def startup_event():
         db.rollback()
     finally:
         db.close()
+        
+@app.post("/api/reset-votes")
+def reset_votes(db: Session = Depends(get_db)):
+    """Сброс всех голосов (для тестирования)"""
+    db.query(models.Vote).delete()
+    db.query(models.Candidate).update({"votes": 0})
+    db.commit()
+    return {"message": "Все голоса сброшены"}
