@@ -46,7 +46,7 @@ uvicorn backend.main:app --reload
 
 После запуска открыть в браузере: http://localhost:8000
 
-Запуск через Docker
+# Запуск через Docker
 
 # 1. Клонировать репозиторий
 git clone https://github.com/Ditry-SD/online-voting.git  
@@ -57,19 +57,19 @@ docker-compose up --build
 
 После запуска открыть в браузере: http://localhost
 
-# Через Docker
+# Запуск тестов
 docker-compose run --rm web python -m pytest test/test_api.py -v
 
 ## 📡 API Endpoints
 
 ###  Метод	URL	Описание
-GET	/	Главная страница со списком кандидатов
-GET	/results	Страница с результатами голосования
-GET	/api/candidates	Получить список всех кандидатов (JSON)
-POST	/api/vote/{candidate_id}	Проголосовать за кандидата по его ID
-POST	/api/reset-votes	Сбросить все голоса (для тестирования)
-GET	/api/health	Проверка работоспособности сервера
-GET	/docs	Интерактивная документация API (Swagger UI)
+GET	/	Главная страница со списком кандидатов  
+GET	/results	Страница с результатами голосования  
+GET	/api/candidates	Получить список всех кандидатов (JSON)  
+POST	/api/vote/{candidate_id}	Проголосовать за кандидата по его ID  
+POST	/api/reset-votes	Сбросить все голоса (для тестирования)  
+GET	/api/health	Проверка работоспособности сервера  
+GET	/docs	Интерактивная документация API (Swagger UI)  
 
 ## 📁 Структура проекта
 
@@ -80,10 +80,10 @@ online-voting/
 │   ├── models.py              # Модели таблиц базы данных  
 │   └── database.py            # Настройка подключения к БД  
 ├── frontend/                   # Клиентская часть приложения  
-│   ├── static/
-│   │   ├── css/
+│   ├── static/  
+│   │   ├── css/  
 │   │   │   └── style.css      # Стили оформления страниц  
-│   │   └── js/
+│   │   └── js/  
 │   │       └── voting.js      # Логика голосования (AJAX)  
 │   └── templates/  
 │       ├── index.html         # Главная страница  
