@@ -36,3 +36,5 @@ pip install -r requirements.txt
 
 # Запустить приложение
 uvicorn backend.main:app --reload
+
+Открыть в браузере: http://localhost:8000
