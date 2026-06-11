@@ -132,6 +132,19 @@ git push origin feature/my-feature
 
 Кнопку сброса голосов для тестирования
 
+## 🗂️ Схема базы данных
+candidates
+├── id (INTEGER, PK)
+├── name (VARCHAR, UNIQUE)
+├── description (VARCHAR)
+└── votes (INTEGER)
+
+votes
+├── id (INTEGER, PK)
+├── user_ip (VARCHAR)
+├── candidate_id (INTEGER, FK)
+└── timestamp (DATETIME)
+
 👨‍💻 Автор
 ФИО: Морозов Дмитрий Владимирович
 Группа: ПИН-б-з-22-1
