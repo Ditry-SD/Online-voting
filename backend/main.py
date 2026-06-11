@@ -12,9 +12,19 @@ from sqlalchemy.orm import Session
 
 from backend.database import engine, SessionLocal, Base
 from backend import models
+from fastapi.middleware.cors import CORSMiddleware
 
 # Создаем приложение FastAPI
 app = FastAPI(title="Online Voting System")
+
+# Настройка CORS для безопасности
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Создаем все таблицы в базе данных при запуске
 Base.metadata.create_all(bind=engine)
@@ -163,3 +173,8 @@ def reset_votes(db: Session = Depends(get_db)):
     db.query(models.Candidate).update({"votes": 0})
     db.commit()
     return {"message": "Все голоса сброшены"}
+
+@app.get("/api/health")
+def health_check():
+    """Проверка работоспособности сервера"""
+    return {"status": "ok", "message": "Сервер работает"}
