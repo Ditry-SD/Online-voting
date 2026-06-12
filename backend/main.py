@@ -115,21 +115,16 @@ def vote(candidate_id: int, request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     if not user:
         raise HTTPException(status_code=401, detail="Необходимо войти в систему")
-    
-    forwarded_for = request.headers.get("X-Forwarded-For")
-    if forwarded_for:
-        user_ip = forwarded_for.split(",")[0].strip()
-    else:
-        user_ip = request.client.host
 
+    # Проверка: голосовал ли уже этот пользователь
     existing_vote = db.query(models.Vote).filter(
-        models.Vote.user_ip == user_ip
+        models.Vote.user_id == user.id
     ).first()
 
     if existing_vote:
         raise HTTPException(
             status_code=400,
-            detail="Вы уже голосовали! С одного IP можно голосовать только один раз."
+            detail="Вы уже голосовали! Один пользователь — один голос."
         )
 
     candidate = db.query(models.Candidate).filter(
@@ -141,12 +136,13 @@ def vote(candidate_id: int, request: Request, db: Session = Depends(get_db)):
 
     candidate.votes += 1
 
+    # Сохраняем голос с привязкой к пользователю
     vote_record = models.Vote(
-        user_ip=user_ip,
-        candidate_id=candidate_id
+        user_id=user.id,
+        candidate_id=candidate_id,
+        user_ip=request.client.host  # для статистики, не для блокировки
     )
     db.add(vote_record)
-
     db.commit()
 
     return {
@@ -245,6 +241,14 @@ def reset_votes(request: Request, db: Session = Depends(get_db)):
     db.query(models.Candidate).update({"votes": 0})
     db.commit()
     return {"message": "Все голоса сброшены"}
+
+@app.get("/api/has-voted")
+def has_voted(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return {"voted": False}
+    vote = db.query(models.Vote).filter(models.Vote.user_id == user.id).first()
+    return {"voted": vote is not None}
 
 @app.get("/api/health")
 def health_check():
