@@ -164,6 +164,29 @@ votes
 ├── candidate_id (INTEGER, FK)  
 └── timestamp (DATETIME)
 
+### Запуск в облаке (SberCloud / Yandex Cloud)
+
+
+# 1. Подключиться к виртуальной машине по SSH
+ssh <login>@IP_адрес
+
+# 2. Установить Docker
+curl -fsSL https://get.docker.com -o get-docker.sh  
+sudo sh get-docker.sh
+
+# 3. Клонировать репозиторий
+git clone https://github.com/Ditry-SD/Online-voting.git  
+cd Online-voting
+
+# 4. Создать файл базы данных с правами
+touch voting.db  
+sudo chmod 777 voting.db
+
+# 5. Запустить приложение
+sudo docker compose up -d --build  
+
+После запуска открыть в браузере: http://IP_адрес
+
 ## 👨‍💻 Автор
 ФИО: Морозов Дмитрий Владимирович  
 Группа: ПИН-б-з-22-1  
