@@ -8,94 +8,120 @@
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <!-- Навигационная панель -->
-    <nav class="navbar navbar-dark bg-dark">
-        <div class="container">
-            <span class="navbar-brand mb-0 h1">🗳️ Результаты голосования</span>
-            <a href="/" class="btn btn-outline-light">← Назад к голосованию</a>
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container">
+        <span class="navbar-brand mb-0 h1">🗳️ Результаты голосования</span>
+        <div>
+            <a href="/" class="btn btn-outline-light btn-sm">← Назад</a>
+            <!-- Кнопка сброса — показывается только админу -->
+            <button class="btn btn-outline-warning btn-sm ms-2" id="resetBtn" onclick="resetVotes()" style="display:none">🔄 Сброс</button>
         </div>
-    </nav>
-    
-    <!-- Основной контент -->
-    <div class="container mt-5">
-        <h1 class="text-center mb-4">Текущие результаты</h1>
-    <div class="text-center mb-4">
-        <button class="btn btn-warning btn-sm" id="resetBtn" onclick="resetVotes()" style="display:none">🔄 Сбросить все голоса</button>
     </div>
-        
-        {% if total_votes > 0 %}
-        <div class="text-center mb-4">
-            <h4>Всего проголосовало: <span class="badge bg-primary fs-5">{{ total_votes }}</span></h4>
-        </div>
-        {% endif %}
-        
-        <div class="row">
-            {% for candidate in candidates %}
-            <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="card-title mb-0">{{ candidate.name }}</h5>
-                            <span class="badge bg-primary fs-6">{{ candidate.votes }} голосов</span>
-                        </div>
-                        
-                        <p class="card-text text-muted">{{ candidate.description }}</p>
-                        
-                        <!-- Прогресс-бар -->
-                        {% if max_votes > 0 %}
-                            {% set percentage = (candidate.votes / max_votes * 100) | int %}
-                        {% else %}
-                            {% set percentage = 0 %}
-                        {% endif %}
-                        
-                        <div class="progress" style="height: 25px;">
-                            <div class="progress-bar 
-                                {% if loop.first %}bg-success{% else %}bg-info{% endif %}" 
-                                role="progressbar" 
-                                style="width: {{ percentage }}%;" 
-                                aria-valuenow="{{ candidate.votes }}" 
-                                aria-valuemin="0" 
-                                aria-valuemax="{{ max_votes }}">
-                                {{ candidate.votes }}
-                            </div>
+</nav>
+
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Текущие результаты</h1>
+    <div class="text-center mb-4">
+        <h4>Всего проголосовало: <span class="badge bg-primary fs-5" id="totalVotes">0</span></h4>
+    </div>
+    <div class="row" id="results-container"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+/**
+ * Система онлайн голосования — страница результатов с автообновлением
+ * Автор: Морозов Д.В., ПИН-б-з-22-1
+ */
+
+// Хранилище голосов для отслеживания изменений
+let currentVotes = {};
+
+/**
+ * Загрузка результатов с сервера
+ */
+async function loadResults() {
+    const res = await fetch('/api/candidates');
+    const candidates = await res.json();
+    candidates.forEach(c => { currentVotes[c.id] = c.votes; });
+    renderResults(candidates);
+}
+
+/**
+ * Отрисовка прогресс-баров для каждого кандидата
+ * Ширина бара пропорциональна голосам относительно лидера
+ */
+function renderResults(candidates) {
+    const maxVotes = Math.max(...candidates.map(c => c.votes), 1);
+    const total = candidates.reduce((sum, c) => sum + c.votes, 0);
+    document.getElementById('totalVotes').textContent = total;
+    
+    const container = document.getElementById('results-container');
+    container.innerHTML = candidates.map(c => `
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">${c.name}</h5>
+                        <span class="badge bg-primary fs-6 vote-badge" data-id="${c.id}">${c.votes} голосов</span>
+                    </div>
+                    <p class="card-text text-muted">${c.description}</p>
+                    <!-- Прогресс-бар: процент от максимального -->
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             style="width: ${Math.round(c.votes / maxVotes * 100)}%;">
+                            ${c.votes}
                         </div>
                     </div>
                 </div>
             </div>
-            {% endfor %}
         </div>
-        
-        {% if total_votes == 0 %}
-        <div class="text-center mt-5">
-            <p class="text-muted">Пока никто не проголосовал. Будьте первым!</p>
-            <a href="/" class="btn btn-primary btn-lg">Перейти к голосованию</a>
-        </div>
-        {% endif %}
-    </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-async function resetVotes() {
-    if (confirm('Точно сбросить все голоса?')) {
-        await fetch('/api/reset-votes', { method: 'POST' });
-        location.reload();
-    }
+    `).join('');
 }
-</script>
 
-<script>
+/**
+ * Автообновление результатов каждые 3 секунды
+ * Обновляет только при изменении данных
+ */
+async function updateResults() {
+    const res = await fetch('/api/candidates');
+    const candidates = await res.json();
+    
+    let changed = false;
+    candidates.forEach(candidate => {
+        const oldVotes = currentVotes[candidate.id] || 0;
+        if (candidate.votes !== oldVotes) {
+            currentVotes[candidate.id] = candidate.votes;
+            changed = true;
+        }
+    });
+    
+    // Перерисовываем только если были изменения
+    if (changed) renderResults(candidates);
+}
+
+// Запуск автообновления
+setInterval(updateResults, 3000);
+
+// Показываем кнопку сброса только администратору
 fetch('/api/me').then(r => r.json()).then(data => {
     if (data.is_admin) {
         document.getElementById('resetBtn').style.display = 'inline-block';
     }
 });
+
+/**
+ * Сброс всех голосов (только для администратора)
+ */
 async function resetVotes() {
     if (confirm('Сбросить все голоса?')) {
         await fetch('/api/reset-votes', { method: 'POST' });
         location.reload();
     }
 }
-</script>
 
+// Первичная загрузка
+loadResults();
+</script>
 </body>
 </html>
