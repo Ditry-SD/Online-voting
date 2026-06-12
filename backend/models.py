@@ -10,12 +10,18 @@ class Candidate(Base):
     votes = Column(Integer, default=0)
 
 class Vote(Base):
+    """Модель таблицы голосов"""
     __tablename__ = "votes"
+
     id = Column(Integer, primary_key=True, index=True)
-    user_ip = Column(String, nullable=False, index=True)
+    user_id = Column(Integer, nullable=False, index=True)      # ID пользователя
     candidate_id = Column(Integer, nullable=False)
+    user_ip = Column(String, nullable=True)                     # IP для статистики (не для блокировки)
     timestamp = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
-    __table_args__ = (Index('ix_votes_ip_candidate', 'user_ip', 'candidate_id'),)
+
+    __table_args__ = (
+        Index('ix_votes_user', 'user_id'),  # Индекс для быстрой проверки
+    )
 
 class User(Base):
     __tablename__ = "users"
