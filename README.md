@@ -1,38 +1,50 @@
 # 🗳️ Система онлайн голосования
 
-Веб-приложение для проведения онлайн голосования. Курсовой проект по дисциплине "Интернет-технологии".
+Веб-приложение для проведения онлайн голосования с авторизацией пользователей. Курсовой проект по дисциплине "Интернет-технологии".
 
 ## 🚀 Функциональность
 
+- ✅ Регистрация и авторизация пользователей
+- ✅ Разделение ролей (пользователь / администратор)
 - ✅ Просмотр списка кандидатов с описанием
-- ✅ Голосование за выбранного кандидата
-- ✅ Защита от повторного голосования (по IP-адресу)
-- ✅ Страница с результатами голосования
-- ✅ Сброс голосов для тестирования
+- ✅ Голосование (один пользователь — один голос)
+- ✅ Блокировка повторного голосования
+- ✅ Страница результатов с прогресс-барами
+- ✅ Автообновление голосов в реальном времени (каждые 3 секунды)
+- ✅ Сброс голосов (только для администратора)
+- ✅ Уведомления по центру экрана
 - ✅ Адаптивный дизайн (Bootstrap 5)
-- ✅ Автоматическая документация API (Swagger UI)
-- ✅ Автоматическое добавление тестовых данных при первом запуске
+- ✅ Документация API (Swagger UI)
 - ✅ Контейнеризация (Docker + Docker Compose + Nginx)
+- ✅ Развертывание в облаке (SberCloud)
 
 ## 🛠️ Технологии
 
 | Компонент | Технология |
 |-----------|------------|
-| **Backend** | Python 3.9, FastAPI, SQLAlchemy |
-| **База данных** | SQLite |
-| **Frontend** | HTML5, CSS3, JavaScript, Bootstrap 5 |
-| **Контейнеризация** | Docker, Docker Compose |
-| **Веб-сервер** | Uvicorn + Nginx |
-| **API документация** | Swagger UI (автоматически) |
-| **Тестирование** | Pytest, Unittest |
+| Backend | Python 3.9, FastAPI, SQLAlchemy |
+| База данных | SQLite (3 таблицы: users, candidates, votes) |
+| Frontend | HTML5, CSS3, JavaScript, Bootstrap 5 |
+| Авторизация | Cookies, SHA-256 |
+| Контейнеризация | Docker, Docker Compose |
+| Веб-сервер | Uvicorn + Nginx |
+| Документация API | Swagger UI |
+| Тестирование | Pytest (10 тестов) |
+| Облако | SberCloud |
 
 ## 📦 Установка и запуск
 
+### Данные по умолчанию
+
+- **Администратор:** admin / admin123  
+- **Кандидаты:** 5 тестовых кандидатов создаются автоматически
+
 ### Локальный запуск (Windows)
 
+bash
 # 1. Клонировать репозиторий
-git clone https://github.com/Ditry-SD/online-voting.git  
-cd online-voting
+git clone https://github.com/Ditry-SD/Online-voting.git  
+cd Online-voting
 
 # 2. Создать и активировать виртуальное окружение
 python -m venv venv  
@@ -44,12 +56,12 @@ pip install -r requirements.txt
 # 4. Запустить приложение
 uvicorn backend.main:app --reload
 
-После запуска открыть в браузере: 
+После запуска открыть в браузере:  
 http://localhost:8000 — главная страница  
-http://localhost:8000/results  — результаты  
+http://localhost:8000/results  — результаты   
 http://localhost:8000/docs — Swagger (описание API)
 
-# Запуск через Docker
+# Локальный запуск через Docker
 
 # 1. Клонировать репозиторий
 git clone https://github.com/Ditry-SD/online-voting.git  
@@ -58,23 +70,56 @@ cd online-voting
 # 2. Собрать и запустить контейнер
 docker-compose build  
 docker-compose up  
+или  
+docker compose up -d --build  
 docker-compose dowm (отключение)
 
 После запуска открыть в браузере: http://localhost
 
+# Развертывание на облачном сервере (SberCloud)
+
+# 1. Подключиться к серверу по SSH
+ssh user1@IP_адрес
+
+# 2. Установить Docker
+curl -fsSL https://get.docker.com -o get-docker.sh  
+sudo sh get-docker.sh
+
+# 3. Клонировать репозиторий
+git clone https://github.com/Ditry-SD/Online-voting.git  
+cd Online-voting
+
+# 4. Создать файл базы данных
+touch voting.db  
+sudo chmod 777 voting.db
+
+# 5. Запустить приложение
+sudo docker compose up -d --build
+
+Открыть в браузере: http://IP_адрес
+
 # Запуск тестов
-docker-compose run --rm web python -m pytest test/test_api.py -v
 
-## 📡 API Endpoints
+# Локально через Docker
+docker compose run --rm web python -m pytest test/test_api.py -v
 
-###  Метод	URL	Описание
-GET	/	Главная страница со списком кандидатов  
-GET	/results	Страница с результатами голосования  
-GET	/api/candidates	Получить список всех кандидатов (JSON)  
-POST	/api/vote/{candidate_id}	Проголосовать за кандидата по его ID  
-POST	/api/reset-votes	Сбросить все голоса (для тестирования)  
-GET	/api/health	Проверка работоспособности сервера  
-GET	/docs	Интерактивная документация API (Swagger UI)  
+# На сервере
+sudo docker compose run --rm web python -m pytest test/test_api.py -v
+
+# 📡 API Endpoints
+Метод	URL	Описание	Авторизация  
+GET	/	Главная страница	Нет  
+GET	/results	Результаты голосования	Нет  
+POST	/api/register	Регистрация	Нет  
+POST	/api/login	Вход в систему	Нет  
+GET	/api/logout	Выход	Нет  
+GET	/api/me	Данные пользователя	Нет  
+GET	/api/candidates	Список кандидатов (JSON)	Нет  
+POST	/api/vote/{id}	Голосование	Да  
+GET	/api/has-voted	Проверка голосования	Да  
+POST	/api/reset-votes	Сброс голосов	Админ  
+GET	/api/health	Проверка сервера	Нет  
+GET	/docs	Swagger UI	Нет
 
 ## 📁 Структура проекта
 
@@ -82,7 +127,7 @@ online-voting/
 ├── backend/                    # Серверная часть приложения  
 │   ├── __init__.py            # Инициализация Python-пакета  
 │   ├── main.py                # Основной файл с API-эндпоинтами  
-│   ├── models.py              # Модели таблиц базы данных  
+│   ├── models.py              # Модели таблиц базы данных (User, Candidate, Vote)  
 │   └── database.py            # Настройка подключения к БД  
 ├── frontend/                   # Клиентская часть приложения  
 │   ├── static/  
@@ -107,48 +152,42 @@ online-voting/
 
 В проекте используется Git Flow:
 
-Ветка	Назначение  
-main	Стабильная версия для продакшена  
+main	Стабильная версия  
 develop	Основная ветка разработки  
-feature/*	Новый функционал  
-
-Текущие ветки:  
-main — стабильная версия (релиз)
-
-develop — разработка
-
-feature/docker-improvements — Nginx и Docker-конфигурация
-
-feature/documentation — документация проекта
-
-feature/roles-and-security — безопасность и индексы БД
-
-feature/tests — модульные тесты
+feature/auth-system	Авторизация и голосование  
+feature/fixes	Фиксы интерфейса  
+feature/tests	Модульные тесты  
+feature/docker-improvements	Docker и Nginx  
+feature/documentation	Документация  
+feature/roles-and-security	Безопасность  
 
 Порядок работы с ветками:
 
 # Создание новой ветки от develop
 git checkout develop  
-git checkout -b feature/my-feature
+git checkout -b feature/название
 
-# После завершения работы
+# ... внесение изменений ...
 git add .  
-git commit -m "feat: описание изменений"  
-git push origin feature/my-feature
+git commit -m "описание"  
+git checkout develop  
+git merge --no-ff feature/название -m "merge: описание"  
+git push origin develop
 
-## 🔒 Защита от повторного голосования
-Приложение отслеживает IP-адрес каждого голосующего. При попытке проголосовать повторно с того же IP-адреса выводится предупреждение, и голос не учитывается. Информация о голосах сохраняется в базе данных SQLite.
+## 🔒 Система авторизации
+Пароли хэшируются алгоритмом SHA-256
+
+Сессии хранятся в cookies
+
+Один пользователь — один голос
+
+Администратор может сбрасывать голоса
 
 ## 📊 Страница результатов
-Страница /results отображает:
 
-Общее количество проголосовавших
-
-Количество голосов за каждого кандидата
-
-Прогресс-бары для наглядного сравнения результатов
-
-Кнопку сброса голосов для тестирования
+Голоса обновляются автоматически каждые 3 секунды через AJAX-запросы.  
+При изменении данных счётчики анимируются. Страница результатов  
+перерисовывает прогресс-бары при обнаружении изменений.
 
 ## Схема базы данных
 
@@ -164,28 +203,9 @@ votes
 ├── candidate_id (INTEGER, FK)  
 └── timestamp (DATETIME)
 
-### Запуск в облаке (SberCloud / Yandex Cloud)
-
-
-# 1. Подключиться к виртуальной машине по SSH
-ssh <login>@IP_адрес
-
-# 2. Установить Docker
-curl -fsSL https://get.docker.com -o get-docker.sh  
-sudo sh get-docker.sh
-
-# 3. Клонировать репозиторий
-git clone https://github.com/Ditry-SD/Online-voting.git  
-cd Online-voting
-
-# 4. Создать файл базы данных с правами
-touch voting.db  
-sudo chmod 777 voting.db
-
-# 5. Запустить приложение
-sudo docker compose up -d --build  
-
-После запуска открыть в браузере: http://IP_адрес
+## 🌐 Демонстрация
+Приложение развернуто в облаке SberCloud:  
+http://ip
 
 ## 👨‍💻 Автор
 ФИО: Морозов Дмитрий Владимирович  
