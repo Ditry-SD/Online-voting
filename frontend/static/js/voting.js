@@ -132,8 +132,8 @@ function enableAllButtons() {
 function showMessage(text, type) {
     const messageDiv = document.getElementById('message');
     messageDiv.className = `alert alert-${type} text-center`;
+    messageDiv.style = 'display: block; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; min-width: 320px;';
     messageDiv.innerHTML = text;
-    messageDiv.style.display = 'block';
     
     setTimeout(() => { messageDiv.style.display = 'none'; }, 3000);
 }
