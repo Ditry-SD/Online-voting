@@ -130,10 +130,19 @@ function enableAllButtons() {
 }
 
 function showMessage(text, type) {
-    const messageDiv = document.getElementById('message');
-    messageDiv.className = `alert alert-${type} alert-dismissible fade show`;
-    messageDiv.innerHTML = `${text}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
-    messageDiv.style.display = 'block';
+    // Удаляем старое сообщение если есть
+    const old = document.getElementById('popup-message');
+    if (old) old.remove();
+    
+    // Создаём новое с правильными стилями
+    const div = document.createElement('div');
+    div.id = 'popup-message';
+    div.className = `alert alert-${type} text-center`;
+    div.textContent = text;
+    div.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; min-width: 320px;';
+    document.body.appendChild(div);
+    
+    setTimeout(() => div.remove(), 3000);
 }
 
 function escapeHTML(str) {
@@ -141,3 +150,16 @@ function escapeHTML(str) {
     div.textContent = str;
     return div.innerHTML;
 }
+
+// Слушаем сброс голосов админом — разблокируем кнопки
+setInterval(async () => {
+    try {
+        const res = await fetch('/api/candidates');
+        const candidates = await res.json();
+        const totalVotes = candidates.reduce((sum, c) => sum + c.votes, 0);
+        
+        if (totalVotes === 0 && Object.values(currentVotes).some(v => v > 0)) {
+            location.reload();
+        }
+    } catch(e) {}
+}, 5000);
