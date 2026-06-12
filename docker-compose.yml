@@ -1,8 +1,8 @@
 services:
   web:
     build: .
-    expose:
-      - "8000"
+    ports:
+      - "8000:8000"
     volumes:
       - ./voting.db:/app/voting.db
       - ./test:/app/test
