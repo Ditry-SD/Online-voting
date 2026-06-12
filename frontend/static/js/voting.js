@@ -144,3 +144,15 @@ function escapeHTML(str) {
     div.textContent = str;
     return div.innerHTML;
 }
+
+// Слушаем сброс голосов админом — разблокируем кнопки
+setInterval(async () => {
+    const res = await fetch('/api/candidates');
+    const candidates = await res.json();
+    const totalVotes = candidates.reduce((sum, c) => sum + c.votes, 0);
+    
+    if (totalVotes === 0 && Object.values(currentVotes).some(v => v > 0)) {
+        // Голоса сброшены — обновляем страницу
+        location.reload();
+    }
+}, 5000);
