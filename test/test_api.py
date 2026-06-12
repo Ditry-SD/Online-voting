@@ -37,8 +37,10 @@ class TestVotingAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_vote_without_login(self):
+        """Проверка отказа в голосовании без авторизации"""
+        client.get("/api/logout")  # Выходим из предыдущей сессии
         response = client.post("/api/vote/1")
-        self.assertIn(response.status_code, [400, 401])
+        self.assertIn(response.status_code, [401, 400])
 
     def test_vote_for_candidate(self):
         self.login("testuser1", "test123")
