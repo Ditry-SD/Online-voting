@@ -3,36 +3,32 @@
  * Автор: Морозов Д.В., ПИН-б-з-22-1
  */
 
-// Хранилище текущих голосов для сравнения изменений
 let currentVotes = {};
 
-// Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', async () => {
     await loadCandidates();
-    // Автообновление каждые 3 секунды
     setInterval(updateVotes, 3000);
 });
 
-/**
- * Загрузка списка кандидатов с сервера
- */
 async function loadCandidates() {
     try {
         const response = await fetch('/api/candidates');
         if (!response.ok) throw new Error('Ошибка загрузки');
         const candidates = await response.json();
-        // Сохраняем начальные значения голосов
         candidates.forEach(c => { currentVotes[c.id] = c.votes; });
         displayCandidates(candidates);
+        
+        // Проверяем, голосовал ли уже пользователь
+        const votedRes = await fetch('/api/has-voted');
+        const votedData = await votedRes.json();
+        if (votedData.voted) {
+            disableAllButtons();
+        }
     } catch (error) {
         showMessage('Не удалось загрузить список кандидатов.', 'danger');
     }
 }
 
-/**
- * Обновление счётчиков голосов без перезагрузки страницы
- * Сравнивает текущие значения с сохранёнными, обновляет только изменившиеся
- */
 async function updateVotes() {
     try {
         const response = await fetch('/api/candidates');
@@ -43,11 +39,9 @@ async function updateVotes() {
             const oldVotes = currentVotes[candidate.id] || 0;
             const newVotes = candidate.votes;
             
-            // Обновляем только если количество изменилось
             if (newVotes !== oldVotes) {
                 const badge = document.querySelector(`.vote-count[data-id="${candidate.id}"] .badge`);
                 if (badge) {
-                    // Анимация: увеличиваем и плавно возвращаем
                     badge.style.transform = 'scale(1.3)';
                     badge.style.transition = 'transform 0.2s ease';
                     badge.textContent = newVotes;
@@ -59,9 +53,6 @@ async function updateVotes() {
     } catch(e) {}
 }
 
-/**
- * Отображение карточек кандидатов на странице
- */
 function displayCandidates(candidates) {
     const container = document.getElementById('candidates-container');
     container.innerHTML = '';
@@ -88,16 +79,11 @@ function displayCandidates(candidates) {
         container.insertAdjacentHTML('beforeend', cardHTML);
     });
     
-    // Назначаем обработчики на все кнопки голосования
     document.querySelectorAll('.vote-btn').forEach(button => {
         button.addEventListener('click', handleVote);
     });
 }
 
-/**
- * Обработка нажатия кнопки "Голосовать"
- * Отправляет POST-запрос к API, блокирует кнопки при успехе
- */
 async function handleVote(event) {
     const button = event.target;
     const candidateId = button.dataset.id;
@@ -114,9 +100,7 @@ async function handleVote(event) {
             showMessage(`✅ ${data.message}`, 'success');
             disableAllButtons();
             await loadCandidates();
-            // Через 3 секунды разблокируем кнопки
             setTimeout(() => {
-                enableAllButtons();
                 document.getElementById('message').style.display = 'none';
             }, 3000);
         } else {
@@ -127,9 +111,6 @@ async function handleVote(event) {
     }
 }
 
-/**
- * Блокировка всех кнопок после голосования
- */
 function disableAllButtons() {
     document.querySelectorAll('.vote-btn').forEach(btn => {
         btn.disabled = true;
@@ -139,9 +120,6 @@ function disableAllButtons() {
     });
 }
 
-/**
- * Разблокировка кнопок голосования
- */
 function enableAllButtons() {
     document.querySelectorAll('.vote-btn').forEach(btn => {
         btn.disabled = false;
@@ -151,9 +129,6 @@ function enableAllButtons() {
     });
 }
 
-/**
- * Отображение уведомлений пользователю
- */
 function showMessage(text, type) {
     const messageDiv = document.getElementById('message');
     messageDiv.className = `alert alert-${type} alert-dismissible fade show`;
@@ -161,9 +136,6 @@ function showMessage(text, type) {
     messageDiv.style.display = 'block';
 }
 
-/**
- * Защита от XSS-атак — экранирование HTML
- */
 function escapeHTML(str) {
     const div = document.createElement('div');
     div.textContent = str;
