@@ -131,11 +131,10 @@ function enableAllButtons() {
 
 function showMessage(text, type) {
     const messageDiv = document.getElementById('message');
-    messageDiv.className = `alert alert-${type} alert-dismissible fade show`;
-    messageDiv.innerHTML = `${text}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+    messageDiv.className = `alert alert-${type} text-center`;
+    messageDiv.innerHTML = text;
     messageDiv.style.display = 'block';
     
-    // Автоскрытие через 3 секунды
     setTimeout(() => { messageDiv.style.display = 'none'; }, 3000);
 }
 
@@ -147,12 +146,13 @@ function escapeHTML(str) {
 
 // Слушаем сброс голосов админом — разблокируем кнопки
 setInterval(async () => {
-    const res = await fetch('/api/candidates');
-    const candidates = await res.json();
-    const totalVotes = candidates.reduce((sum, c) => sum + c.votes, 0);
-    
-    if (totalVotes === 0 && Object.values(currentVotes).some(v => v > 0)) {
-        // Голоса сброшены — обновляем страницу
-        location.reload();
-    }
+    try {
+        const res = await fetch('/api/candidates');
+        const candidates = await res.json();
+        const totalVotes = candidates.reduce((sum, c) => sum + c.votes, 0);
+        
+        if (totalVotes === 0 && Object.values(currentVotes).some(v => v > 0)) {
+            location.reload();
+        }
+    } catch(e) {}
 }, 5000);
