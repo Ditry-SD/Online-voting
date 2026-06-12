@@ -20,7 +20,7 @@
     <div class="container mt-5">
         <h1 class="text-center mb-4">Текущие результаты</h1>
     <div class="text-center mb-4">
-        <button onclick="resetVotes()" class="btn btn-warning btn-sm">🔄 Сбросить все голоса</button>
+        <button class="btn btn-warning btn-sm" id="resetBtn" onclick="resetVotes()" style="display:none">🔄 Сбросить все голоса</button>
     </div>
         
         {% if total_votes > 0 %}
@@ -82,5 +82,20 @@ async function resetVotes() {
     }
 }
 </script>
+
+<script>
+fetch('/api/me').then(r => r.json()).then(data => {
+    if (data.is_admin) {
+        document.getElementById('resetBtn').style.display = 'inline-block';
+    }
+});
+async function resetVotes() {
+    if (confirm('Сбросить все голоса?')) {
+        await fetch('/api/reset-votes', { method: 'POST' });
+        location.reload();
+    }
+}
+</script>
+
 </body>
 </html>
