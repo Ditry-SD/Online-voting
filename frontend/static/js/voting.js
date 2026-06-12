@@ -130,12 +130,19 @@ function enableAllButtons() {
 }
 
 function showMessage(text, type) {
-    const messageDiv = document.getElementById('message');
-    messageDiv.className = `alert alert-${type} text-center`;
-    messageDiv.style = 'display: block; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; min-width: 320px;';
-    messageDiv.innerHTML = text;
+    // Удаляем старое сообщение если есть
+    const old = document.getElementById('popup-message');
+    if (old) old.remove();
     
-    setTimeout(() => { messageDiv.style.display = 'none'; }, 3000);
+    // Создаём новое с правильными стилями
+    const div = document.createElement('div');
+    div.id = 'popup-message';
+    div.className = `alert alert-${type} text-center`;
+    div.textContent = text;
+    div.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; min-width: 320px;';
+    document.body.appendChild(div);
+    
+    setTimeout(() => div.remove(), 3000);
 }
 
 function escapeHTML(str) {
