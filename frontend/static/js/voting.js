@@ -131,9 +131,9 @@ function enableAllButtons() {
 
 function showMessage(text, type) {
     const messageDiv = document.getElementById('message');
-    messageDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-2`;
-    messageDiv.style = 'display: block; z-index: 9999; min-width: 300px;';
+    messageDiv.className = `alert alert-${type} alert-dismissible fade show`;
     messageDiv.innerHTML = `${text}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+    messageDiv.style.display = 'block';
     
     // Автоскрытие через 3 секунды
     setTimeout(() => { messageDiv.style.display = 'none'; }, 3000);
